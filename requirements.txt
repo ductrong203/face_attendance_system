@@ -1,6 +1,7 @@
 absl-py==2.1.0
 alembic==1.14.0
 astunparse==1.6.3
+async-timeout==5.0.1
 bcrypt==4.2.1
 blinker==1.8.2
 certifi==2024.8.30
