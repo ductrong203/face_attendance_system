@@ -29,7 +29,7 @@ def login(data):
     if check_password_hash(user.password, password):
         access_token = create_access_token(identity=str(user.id_employee), expires_delta=timedelta(hours=1))
         logging.info(f"User {username} logged in successfully")
-        return jsonify(access_token=access_token), 200
+        return jsonify(access_token=access_token,id=user.id_employee), 200
 
     logging.warning("Invalid credentials")
     return jsonify({"msg": "Invalid credentials"}), 401
