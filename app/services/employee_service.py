@@ -3,6 +3,8 @@ from app.models import Employee
 from app import db
 from flask_jwt_extended import  get_jwt_identity
 from werkzeug.security import check_password_hash, generate_password_hash
+from flask import request
+from sqlalchemy import or_
 # Lấy thông tin nhân viên 
 def get_employee_info(employee_id):
     employee = Employee.query.get(employee_id)
@@ -57,15 +59,29 @@ def delete_employee_info(employee_id):
         return jsonify({'error': str(e)}), 500
 # Xem tất cả tt nhân viên
 def get_all_employee_info():
-     current_user_id = get_jwt_identity()
-     current_user = Employee.query.get(current_user_id)
-     if not current_user or not current_user.isAdmin:
-        return jsonify({'error': 'You do not have permission to get all employees'}), 403
-     employees = Employee.query.all()
-     if not employees:
-          return jsonify({'error': 'There are no employees'}), 404
-     employee_data = []
-     for employee in employees:
+    current_user_id = get_jwt_identity()
+    current_user = Employee.query.get(current_user_id)
+    if not current_user or not current_user.isAdmin:
+        return jsonify({'error': 'Permission denied !'}), 403
+# Phân trang
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('perPage', 10, type=int)
+    search = request.args.get('searchValue', '', type=str)
+
+    query = Employee.query.filter(
+        or_(
+            Employee.id_employee.like(f"%{search}%"),
+            Employee.name.like(f"%{search}%")
+        )
+    )
+
+    paginated_employees = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    employees = paginated_employees.items
+    if not employees:
+        return jsonify({'error': 'No employees found'}), 404
+    employee_data = []
+    for employee in employees:
         employee_data.append({
             'id': employee.id_employee,
             'username': employee.username,
@@ -76,6 +92,13 @@ def get_all_employee_info():
             'role': employee.role,
             'address': employee.address,
             'isAdmin': employee.isAdmin,
-            'department': employee.department.name if employee.department else None
+            'department': {
+                'name': employee.department.name if employee.department else None
+            } if employee.department else None
         })
-        return jsonify({'employees': employee_data}), 200
+    return jsonify({
+        'employees': employee_data,
+        'total': paginated_employees.total,
+        'pages': paginated_employees.pages,
+        'current_page': paginated_employees.page
+    }), 200
