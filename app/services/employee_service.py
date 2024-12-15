@@ -25,6 +25,12 @@ def updated_employee_info(employee_id, data):
     employee = Employee.query.get(employee_id)
     if not employee:
         return jsonify({'error': 'Employee not found'}), 404
+    # Kiểm tra nếu mật khẩu mới được gửi trong data
+    if 'password' in data:
+        new_password = data['password']
+        if employee.password == new_password:
+            return jsonify({'error': 'New password cannot be the same as the old password'}), 400
+
     for key, value in data.items():
         if hasattr(employee, key):
             setattr(employee, key, value)
