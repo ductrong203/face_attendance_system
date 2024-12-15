@@ -2,6 +2,7 @@ from flask import jsonify
 from app.models import Employee
 from app import db
 from flask_jwt_extended import  get_jwt_identity
+from werkzeug.security import check_password_hash, generate_password_hash
 # Lấy thông tin nhân viên 
 def get_employee_info(employee_id):
     employee = Employee.query.get(employee_id)
@@ -25,12 +26,9 @@ def updated_employee_info(employee_id, data):
     employee = Employee.query.get(employee_id)
     if not employee:
         return jsonify({'error': 'Employee not found'}), 404
-    # Kiểm tra nếu mật khẩu mới được gửi trong data
-    if 'password' in data:
-        new_password = data['password']
-        if employee.password == new_password:
-            return jsonify({'error': 'New password cannot be the same as the old password'}), 400
-
+    if "password" in data:
+        new_password=data['password']
+    data['password'] = generate_password_hash(new_password)
     for key, value in data.items():
         if hasattr(employee, key):
             setattr(employee, key, value)
