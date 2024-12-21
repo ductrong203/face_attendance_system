@@ -13,11 +13,11 @@ def create_app():
     migrate.init_app(app, db)
     jwt.init_app(app)
 
-    from app.routes import auth, attendance, leave_request, employee,face
+    from app.routes import auth, attendance, leave_request, employee,face,ledSetting
     app.register_blueprint(auth.bp)
     app.register_blueprint(attendance.bp)
     app.register_blueprint(leave_request.bp)
     app.register_blueprint(employee.bp)
     app.register_blueprint(face.bp)
-
+    app.register_blueprint(ledSetting.bp)
     return app

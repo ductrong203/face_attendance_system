@@ -8,7 +8,6 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-import cv2
 import pickle
 from win32com.client import Dispatch
 

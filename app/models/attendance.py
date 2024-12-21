@@ -6,5 +6,4 @@ class Attendance(db.Model):
     date = db.Column(db.Date, nullable=False)
     time_in = db.Column(db.Time)
     time_out = db.Column(db.Time)
-
     employee = db.relationship('Employee', backref='attendances', lazy=True)

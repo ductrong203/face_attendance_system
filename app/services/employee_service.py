@@ -69,6 +69,7 @@ def get_all_employee_info():
     search = request.args.get('searchValue', '', type=str)
 
     query = Employee.query.filter(
+        
         or_(
             Employee.id_employee.like(f"%{search}%"),
             Employee.name.like(f"%{search}%")
