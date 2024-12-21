@@ -7,7 +7,6 @@ bp = Blueprint('attendance', __name__, url_prefix='/attendance')
 @bp.route('/employee/<int:id>', methods=['GET'])
 def get_employee_attendance(id):
     try:
-        # Lấy các tham số từ query string
         day = request.args.get('day', None)
         month = request.args.get('month', None)
         quarter = request.args.get('quarter', None)
@@ -23,7 +22,6 @@ def get_employee_attendance(id):
 @jwt_required() 
 def get_admin_attendance_by_employee(id):
     try:
-        # Lấy các tham số từ query string
         day = request.args.get('day', None)
         month = request.args.get('month', None)
         quarter = request.args.get('quarter', None)
@@ -36,7 +34,6 @@ def get_admin_attendance_by_employee(id):
 @jwt_required() 
 def get_admin_summary():
     try:
-        # Lấy các tham số từ query string
         day = request.args.get('day', None)
         month = request.args.get('month', None)
         quarter = request.args.get('quarter', None)
