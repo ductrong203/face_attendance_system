@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.services.leave_request_service import request_leave,get_employee_leave_requests,get_all_leave_requests,update_leave_request_status
+from app.services.leave_request_service import request_leave,get_employee_leave_requests,get_all_leave_requests,update_leave_request_status,get_leave_requests_by_id
 from flask_jwt_extended import jwt_required
 bp = Blueprint('leave_request', __name__, url_prefix='/leave_request')
 #  tạo đơn xin nghỉ.
@@ -32,4 +32,9 @@ def approve_request(request_id):
 @jwt_required()
 def reject_request(request_id):
     response, status = update_leave_request_status(request_id, 'Rejected')
+    return jsonify(response), status
+@bp.route('/get_request/<int:request_id>', methods=['GET'])
+@jwt_required()
+def get_request(request_id):
+    response, status =get_leave_requests_by_id(request_id)
     return jsonify(response), status

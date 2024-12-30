@@ -35,7 +35,7 @@ def request_leave(data):
             end_date=end_date,
             request_type=request_type,
             reason=reason,
-            status='depending',  # Trạng thái mặc định là "Sent"
+            status='depending',  
             request_date=datetime.now()
         )
 
@@ -69,6 +69,26 @@ def get_employee_leave_requests(id_employee):
         return result, 200
     except Exception as e:
         return {'error': str(e)}, 500
+def get_leave_requests_by_id(request_id):
+    try:
+        requests = LeaveRequest.query.filter_by(id_leave=request_id).all()
+        if not requests:
+            return {'message': 'No leave requests found'}, 404
+        
+        result = [{
+            'id': req.id_leave,
+            'name': req.employee.name,
+            'start_date': req.start_date.strftime('%Y-%m-%d'),
+            'end_date': req.end_date.strftime('%Y-%m-%d'),
+            'request_type': req.request_type,
+            'reason': req.reason,
+            'status': req.status,
+            'request_date': req.request_date.strftime('%Y-%m-%d %H:%M:%S')
+        } for req in requests]
+
+        return result, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
 # admin xem tất cả đơn
 def get_all_leave_requests():
     current_user_id = get_jwt_identity()
@@ -86,6 +106,7 @@ def get_all_leave_requests():
             result.append({
                 'id': req.id_leave,
                 'id_employee': req.id_employee,
+                'name': req.employee.name,
                 'start_date': req.start_date.strftime('%Y-%m-%d'),
                 'end_date': req.end_date.strftime('%Y-%m-%d'),
                 'request_type': req.request_type,
