@@ -1,5 +1,5 @@
 from flask import jsonify
-from app.models import Employee
+from app.models import Employee,Attendance,Face
 from app import db
 from flask_jwt_extended import  get_jwt_identity
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -30,7 +30,8 @@ def updated_employee_info(employee_id, data):
         return jsonify({'error': 'Employee not found'}), 404
     if "password" in data:
         new_password=data['password']
-    data['password'] = generate_password_hash(new_password)
+        data['password'] = generate_password_hash(new_password)
+    
     for key, value in data.items():
         if hasattr(employee, key):
             setattr(employee, key, value)
@@ -44,15 +45,20 @@ def updated_employee_info(employee_id, data):
 def delete_employee_info(employee_id):
     current_user_id = get_jwt_identity()
     current_user = Employee.query.get(current_user_id)
+    
     if not current_user or not current_user.isAdmin:
         return jsonify({'error': 'You do not have permission to delete employees'}), 403
+
     employee = Employee.query.get(employee_id)
     if not employee:
         return jsonify({'error': 'Employee not found'}), 404
 
     try:
+        Attendance.query.filter_by(id_employee=employee_id).delete()
+        Face.query.filter_by(id_employee=employee_id).delete()
         db.session.delete(employee)
         db.session.commit()
+
         return jsonify({'message': 'Employee deleted successfully'}), 200
     except Exception as e:
         db.session.rollback()

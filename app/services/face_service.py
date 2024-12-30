@@ -10,7 +10,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import pickle
 from win32com.client import Dispatch
+from datetime import datetime
 
+from app.models.attendance import Attendance
 # thu thap du lieu khuon mat
 def capture_face_data(user_id):
     # Khởi động webcam và thu thập dữ liệu khuôn mặt
@@ -129,4 +131,32 @@ def train_model_service():
     with open(r'C:\Desktop\face_attendance_system\data\svm_model\label_encoder.pkl', 'wb') as f:
         pickle.dump(label_encoder, f)
     return accuracy
+
+
+def log_attendance(predicted_id, status):
+    date = datetime.now().strftime("%Y-%m-%d")
+    timestamp = datetime.now().strftime("%H:%M:%S")
+
+    if status == "checkin":
+        # Kiểm tra xem nhân viên đã điểm danh vào ngày hôm nay chưa
+        attendance = Attendance.query.filter_by(id_employee=predicted_id, date=date).first()
+        
+        if not attendance:
+            # Nếu chưa, tạo mới bản ghi attendance
+            new_attendance = Attendance(
+                id_employee=predicted_id,
+                date=date,
+                time_in=timestamp
+            )
+            db.session.add(new_attendance)
+            db.session.commit()
+
+    elif status == "checkout":
+        # Cập nhật giờ ra nếu đã có bản ghi attendance cho ngày hôm nay
+        attendance = Attendance.query.filter_by(id_employee=predicted_id, date=date).first()
+        
+        if attendance:
+            attendance.time_out = timestamp
+            db.session.commit()
+
 

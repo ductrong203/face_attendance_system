@@ -11,7 +11,7 @@ def get_employee(id):
 def update_employee(id):
     data = request.get_json()
     return updated_employee_info(id, data)
-@bp.route('/delete/<int:id>',methods=['POST'])
+@bp.route('/delete/<int:id>',methods=['DELETE'])
 @jwt_required()
 def delete_employee(id):
       return delete_employee_info(id)
