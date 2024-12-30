@@ -1,5 +1,5 @@
 from flask import jsonify
-from app.models import Employee,Attendance,Face
+from app.models import Employee,Attendance,Face,LeaveRequest
 from app import db
 from flask_jwt_extended import  get_jwt_identity
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -56,6 +56,7 @@ def delete_employee_info(employee_id):
     try:
         Attendance.query.filter_by(id_employee=employee_id).delete()
         Face.query.filter_by(id_employee=employee_id).delete()
+        LeaveRequest.query.filter_by(id_employee=employee).delete()
         db.session.delete(employee)
         db.session.commit()
 
