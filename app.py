@@ -19,6 +19,6 @@ def home():
     return jsonify(message="Hello, World!")
 
 
-app.run(debug=True)
+app.run(host='0.0.0.0',debug=True)
 
 

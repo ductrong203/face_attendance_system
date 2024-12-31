@@ -56,7 +56,7 @@ def delete_employee_info(employee_id):
     try:
         Attendance.query.filter_by(id_employee=employee_id).delete()
         Face.query.filter_by(id_employee=employee_id).delete()
-        LeaveRequest.query.filter_by(id_employee=employee).delete()
+        LeaveRequest.query.filter_by(id_employee=employee_id).delete()
         db.session.delete(employee)
         db.session.commit()
 
@@ -76,7 +76,7 @@ def get_all_employee_info():
     search = request.args.get('searchValue', '', type=str)
 
     query = Employee.query.filter(
-        
+        Employee.isAdmin == False,
         or_(
             Employee.id_employee.like(f"%{search}%"),
             Employee.name.like(f"%{search}%")
