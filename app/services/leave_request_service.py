@@ -4,6 +4,7 @@ from datetime import datetime
 from flask import jsonify
 from flask_jwt_extended import  get_jwt_identity
 from flask import request
+from sqlalchemy import or_
 def request_leave(data):
     try:
         id_employee = data.get('id_employee')
@@ -82,15 +83,17 @@ def get_leave_requests_by_id(request_id):
 def get_all_leave_requests():
     current_user_id = get_jwt_identity()
     current_user = Employee.query.get(current_user_id)
+    
     if not current_user or not current_user.isAdmin:
         return jsonify({'error': 'Permission denied !'}), 403
+    
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('perPage', 10, type=int)
     search = request.args.get('searchValue', '', type=str)
 
     try:
         query = LeaveRequest.query.join(Employee).filter(
-            (
+            or_(
                 LeaveRequest.id_employee.like(f"%{search}%"),
                 Employee.name.like(f"%{search}%"),
                 LeaveRequest.reason.like(f"%{search}%"),
@@ -99,24 +102,26 @@ def get_all_leave_requests():
         )
         paginated_requests = query.paginate(page=page, per_page=per_page, error_out=False)
         leave_requests = paginated_requests.items
+        print("Paginated leave requests:", leave_requests)
 
         if not leave_requests:
             return jsonify({'error': 'No leave requests found'}), 404
 
         result = []
         for req in leave_requests:
+            print(f"Processing leave request: {req.id_leave}, {req.start_date}, {req.end_date}")
+
             result.append({
                 'id': req.id_leave,
                 'id_employee': req.id_employee,
                 'name': req.employee.name,
-                'start_date': req.start_date.strftime('%Y-%m-%d'),
-                'end_date': req.end_date.strftime('%Y-%m-%d'),
+                'start_date': req.start_date.strftime('%Y-%m-%d') if req.start_date else None,
+                'end_date': req.end_date.strftime('%Y-%m-%d') if req.end_date else None,
                 'request_type': req.request_type,
                 'reason': req.reason,
                 'status': req.status,
-                'request_date': req.request_date.strftime('%Y-%m-%d %H:%M:%S')
+                'request_date': req.request_date.strftime('%Y-%m-%d %H:%M:%S') if req.request_date else None
             })
-
         return jsonify({
             'leave_requests': result,
             'total': paginated_requests.total,
@@ -124,6 +129,7 @@ def get_all_leave_requests():
             'current_page': paginated_requests.page
         }), 200
     except Exception as e:
+        print("Error:", str(e))  
         return jsonify({'error': str(e)}), 500
 
 # admin duyệt đơn

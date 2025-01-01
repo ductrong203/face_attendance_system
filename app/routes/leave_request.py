@@ -20,8 +20,7 @@ def employee_requests():
 @bp.route('/getAll', methods=['GET'])
 @jwt_required()
 def admin_requests():
-    response, status = get_all_leave_requests()
-    return jsonify(response), status
+    return get_all_leave_requests()
 @bp.route('/approve/<int:request_id>', methods=['POST'])
 @jwt_required()
 def approve_request(request_id):

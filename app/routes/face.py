@@ -3,10 +3,10 @@ from app.services.face_service import capture_face_data, train_model_service, lo
 from datetime import datetime
 import requests
 bp = Blueprint('face', __name__, url_prefix='/face')
-ESP32_URL = "http://192.168.0.108/open-door"  
+ESP32_URL = "http://172.20.10.3/open-door"  
 def notify_esp32():
     try:
-        response = requests.post(ESP32_URL, timeout=5)  # Gửi tín hiệu mở cửa
+        response = requests.post(ESP32_URL, timeout=10)  # Gửi tín hiệu mở cửa
         if response.status_code == 200:
             print("ESP32 notified successfully.")
         else:
