@@ -3,32 +3,24 @@ from app.models import LeaveRequest,Employee
 from datetime import datetime
 from flask import jsonify
 from flask_jwt_extended import  get_jwt_identity
+from flask import request
 def request_leave(data):
     try:
-        # Lấy thông tin từ dữ liệu yêu cầu
         id_employee = data.get('id_employee')
         start_date = data.get('start_date')
         end_date = data.get('end_date')
         request_type = data.get('request_type')
         reason = data.get('reason')
-        
-        # Kiểm tra xem các trường bắt buộc có tồn tại không
         if not all([id_employee, start_date, end_date, request_type, reason]):
             return jsonify({'error': 'Missing required fields'}), 400
-
-        # Kiểm tra xem id_employee đã được đăng ký chưa
-        employee = Employee.query.filter_by(id_employee=id_employee).first()  # Tìm nhân viên trong bảng Employee
+        employee = Employee.query.filter_by(id_employee=id_employee).first()  
         if not employee:
             return jsonify({'error': 'Employee not found'}), 404
-
-        # Chuyển đổi dữ liệu ngày sang định dạng datetime
         try:
             start_date = datetime.strptime(start_date, '%Y-%m-%d')
             end_date = datetime.strptime(end_date, '%Y-%m-%d')
         except ValueError as e:
             return jsonify({'error': f'Invalid date format: {e}'}), 400
-
-        # Tạo yêu cầu nghỉ phép mới
         new_leave_request = LeaveRequest(
             id_employee=id_employee,
             start_date=start_date,
@@ -38,15 +30,12 @@ def request_leave(data):
             status='depending',  
             request_date=datetime.now()
         )
-
-        # Thêm yêu cầu vào cơ sở dữ liệu
         db.session.add(new_leave_request)
         db.session.commit()
 
         return jsonify({'message': 'Leave request created successfully'}), 201
 
     except Exception as e:
-        # Xử lý lỗi chung
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 # Nhân viên xem đơn xin nghỉ của mình
@@ -94,15 +83,28 @@ def get_all_leave_requests():
     current_user_id = get_jwt_identity()
     current_user = Employee.query.get(current_user_id)
     if not current_user or not current_user.isAdmin:
-        return jsonify({'error': 'Permisstion denied !'}), 403
-    try:
+        return jsonify({'error': 'Permission denied !'}), 403
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('perPage', 10, type=int)
+    search = request.args.get('searchValue', '', type=str)
 
-        requests = LeaveRequest.query.all()
-        if not requests:
-            return {'message': 'No leave requests found'}, 404
+    try:
+        query = LeaveRequest.query.join(Employee).filter(
+            (
+                LeaveRequest.id_employee.like(f"%{search}%"),
+                Employee.name.like(f"%{search}%"),
+                LeaveRequest.reason.like(f"%{search}%"),
+                LeaveRequest.request_type.like(f"%{search}%")
+            )
+        )
+        paginated_requests = query.paginate(page=page, per_page=per_page, error_out=False)
+        leave_requests = paginated_requests.items
+
+        if not leave_requests:
+            return jsonify({'error': 'No leave requests found'}), 404
 
         result = []
-        for req in requests:
+        for req in leave_requests:
             result.append({
                 'id': req.id_leave,
                 'id_employee': req.id_employee,
@@ -115,9 +117,15 @@ def get_all_leave_requests():
                 'request_date': req.request_date.strftime('%Y-%m-%d %H:%M:%S')
             })
 
-        return result, 200
+        return jsonify({
+            'leave_requests': result,
+            'total': paginated_requests.total,
+            'pages': paginated_requests.pages,
+            'current_page': paginated_requests.page
+        }), 200
     except Exception as e:
-        return {'error': str(e)}, 500
+        return jsonify({'error': str(e)}), 500
+
 # admin duyệt đơn
 def update_leave_request_status(request_id, status):
     current_user_id = get_jwt_identity()

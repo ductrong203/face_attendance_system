@@ -7,7 +7,7 @@ bp = Blueprint('employee', __name__, url_prefix='/employee')
 def get_employee(id):
     return get_employee_info(id)
 
-@bp.route('/update/<int:id>', methods=['PUT'])
+@bp.route('/update/<int:id>', methods=['POST'])
 def update_employee(id):
     data = request.get_json()
     return updated_employee_info(id, data)

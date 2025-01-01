@@ -22,13 +22,13 @@ def employee_requests():
 def admin_requests():
     response, status = get_all_leave_requests()
     return jsonify(response), status
-@bp.route('/approve/<int:request_id>', methods=['PUT'])
+@bp.route('/approve/<int:request_id>', methods=['POST'])
 @jwt_required()
 def approve_request(request_id):
     response, status = update_leave_request_status(request_id, 'Approved')
     return jsonify(response), status
 
-@bp.route('/reject/<int:request_id>', methods=['PUT'])
+@bp.route('/reject/<int:request_id>', methods=['POST'])
 @jwt_required()
 def reject_request(request_id):
     response, status = update_leave_request_status(request_id, 'Rejected')

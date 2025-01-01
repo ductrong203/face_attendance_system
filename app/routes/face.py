@@ -1,20 +1,28 @@
 from flask import Blueprint, request, jsonify
 from app.services.face_service import capture_face_data, train_model_service, log_attendance
 from datetime import datetime
-
+import requests
 bp = Blueprint('face', __name__, url_prefix='/face')
-door_status = "close" 
+ESP32_URL = "http://192.168.0.108/open-door"  
+def notify_esp32():
+    try:
+        response = requests.post(ESP32_URL, timeout=5)  # Gửi tín hiệu mở cửa
+        if response.status_code == 200:
+            print("ESP32 notified successfully.")
+        else:
+            print(f"Failed to notify ESP32. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Error notifying ESP32: {e}")
 @bp.route('/collect', methods=['POST'])
 def collect_face():
-    # Lấy ID từ yêu cầu POST
     user_id = request.json.get('id')
+    face_base64 = request.json.get('faces')
+    
+    if not user_id or not face_base64:
+        return jsonify({"error": "ID hoặc dữ liệu khuôn mặt không được cung cấp"}), 400
 
-    if not user_id:
-        return jsonify({"error": "ID không được cung cấp"}), 400
-
-    # Thu thập dữ liệu khuôn mặt
     try:
-        capture_face_data(user_id)
+        capture_face_data(user_id, face_base64)
         return jsonify({"message": f"Dữ liệu khuôn mặt đã được thu thập cho ID {user_id}"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -36,16 +44,16 @@ def start_training():
 def checkin():
     global door_status
     data = request.json
-    print("Received data:", data)  # Debug log
+    print("Received data:", data)  
     predicted_id = data.get('id')
 
     if not predicted_id:
         return jsonify({"error": "Missing predicted ID."}), 400
 
     try:
-        # Log attendance
+       
         log_attendance(predicted_id, "checkin")
-        door_status = "open"
+        notify_esp32() 
         return jsonify({
             "message": f"Check-in successful for ID {predicted_id}.",
             "status": "checkin",
@@ -58,7 +66,6 @@ def checkin():
 
 @bp.route('/checkout', methods=['POST'])
 def checkout():
-    global door_status
     data = request.json
     print("Received data:", data)  # Debug log
     predicted_id = data.get('id')
@@ -67,9 +74,8 @@ def checkout():
         return jsonify({"error": "Missing predicted ID."}), 400
 
     try:
-        # Log attendance
         log_attendance(predicted_id, "checkout")
-        door_status = "open"
+        notify_esp32() 
         return jsonify({
             "message": f"Check-out successful for ID {predicted_id}.",
             "status": "checkout",
@@ -77,7 +83,4 @@ def checkout():
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-@bp.route('/door-status', methods=['GET'])
-def door_status_route():
-    global door_status
-    return jsonify(door_status)
+
